@@ -6,6 +6,8 @@ import type {
   AgentState,
   PendingDecision,
 } from './protocol.js';
+import { extractTitleHints, getRecord, upsertRecord, type SessionTitleRecord } from './session-titles.js';
+import { readFirstUserPrompt } from './transcripts.js';
 
 const log = makeLogger('state');
 
@@ -25,6 +27,7 @@ interface AgentRecord extends AgentInfo {
 
 export class AgentRegistry extends EventEmitter {
   private agents = new Map<string, AgentRecord>();
+  private hydrated = new Set<string>();
 
   list(): AgentInfo[] {
     return Array.from(this.agents.values()).map(stripInternal);
@@ -53,6 +56,7 @@ export class AgentRegistry extends EventEmitter {
       log.info(`agent added ${id} → ${agent.state}`);
       this.emit('event', { kind: 'added', agent: stripInternal(agent) } satisfies AgentEvent);
       this.fireDecisionMessages(agent);
+      void this.hydrateSessionContext(agent);
       return;
     }
 
@@ -128,6 +132,51 @@ export class AgentRegistry extends EventEmitter {
       } satisfies AgentEvent);
     }
   }
+
+  private async hydrateSessionContext(agent: AgentRecord): Promise<void> {
+    if (this.hydrated.has(agent.id)) return;
+    this.hydrated.add(agent.id);
+
+    let changed = false;
+    agent.metadata ||= {};
+
+    const record = await getRecord(agent.id);
+    if (record) {
+      const map: Array<[keyof SessionTitleRecord, string]> = [
+        ['first_prompt', 'session_first_prompt'],
+        ['role',         'session_role'],
+        ['target',       'session_target'],
+        ['job',          'session_job'],
+        ['mission',      'session_mission'],
+      ];
+      for (const [src, dst] of map) {
+        const val = record[src];
+        if (typeof val === 'string' && val && !agent.metadata[dst]) {
+          agent.metadata[dst] = val;
+          changed = true;
+        }
+      }
+    }
+
+    if (!agent.metadata.session_first_prompt && agent.source === 'claude-code') {
+      const sessionId = agent.id.slice(agent.id.indexOf(':') + 1);
+      try {
+        const prompt = await readFirstUserPrompt(sessionId);
+        if (prompt) {
+          const truncated = truncateLabel(prompt, 96);
+          agent.metadata.session_first_prompt = truncated;
+          await upsertRecord(agent.id, { first_prompt: truncated });
+          changed = true;
+        }
+      } catch (err) {
+        log.warn(`transcript hydrate failed ${agent.id}`, err);
+      }
+    }
+
+    if (changed && this.agents.has(agent.id)) {
+      this.emit('event', { kind: 'updated', agent: stripInternal(agent) } satisfies AgentEvent);
+    }
+  }
 }
 
 function agentId(event: AdapterEvent): string {
@@ -150,6 +199,10 @@ function applyTransition(agent: AgentRecord, event: AdapterEvent): void {
   if (event.event_type !== 'context_compact' && agent.metadata?.compacting) {
     delete agent.metadata.compacting;
   }
+  const cwd = payload.workdir as string | undefined;
+  if (cwd && !agent.metadata?.workdir) {
+    (agent.metadata ||= {}).workdir = cwd;
+  }
   switch (event.event_type) {
     case 'session_start': {
       agent.state = 'idle';
@@ -162,7 +215,42 @@ function applyTransition(agent: AgentRecord, event: AdapterEvent): void {
     case 'user_prompt': {
       agent.state = 'thinking';
       const preview = payload.prompt_preview as string | undefined;
-      if (preview) agent.label = truncateLabel(preview);
+      if (preview) {
+        const cleaned = stripSystemTags(preview);
+        if (cleaned) {
+          agent.label = truncateLabel(cleaned);
+          agent.metadata ||= {};
+          agent.metadata.last_user_prompt = truncateLabel(cleaned);
+
+          const hints = extractTitleHints(cleaned);
+          const patch: Partial<SessionTitleRecord> = {};
+          if (hints.role) {
+            const v = truncateLabel(hints.role, 32);
+            agent.metadata.session_role = v;
+            patch.role = v;
+          }
+          if (hints.target) {
+            const v = truncateLabel(hints.target, 48);
+            agent.metadata.session_target = v;
+            patch.target = v;
+          }
+          if (hints.job) {
+            const v = truncateLabel(hints.job, 48);
+            agent.metadata.session_job = v;
+            patch.job = v;
+          }
+          if (hints.mission) {
+            const v = truncateLabel(hints.mission, 48);
+            agent.metadata.session_mission = v;
+            patch.mission = v;
+          }
+          if (Object.keys(patch).length > 0) {
+            void upsertRecord(agent.id, patch);
+          }
+        } else {
+          agent.label = '(system event)';
+        }
+      }
       break;
     }
     case 'thinking_start': {
@@ -233,6 +321,10 @@ function applyTransition(agent: AgentRecord, event: AdapterEvent): void {
 
 function truncateLabel(s: string, max = 64): string {
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
+
+function stripSystemTags(s: string): string {
+  return s.replace(/<([a-zA-Z][\w-]*)\b[^>]*>[\s\S]*?<\/\1>/g, '').trim();
 }
 
 export type { AgentInfo, AgentState } from './protocol.js';

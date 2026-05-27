@@ -56,9 +56,10 @@ function truncate(str, max) {
 
 function buildPayload(hookType, hookData) {
   const payload = {};
+  const cwd = hookData.cwd || hookData.workdir;
+  if (cwd) payload.workdir = cwd;
   switch (hookType) {
     case 'session_start':
-      payload.workdir = hookData.cwd || hookData.workdir;
       payload.model = hookData.model;
       break;
     case 'user_prompt':

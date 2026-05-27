@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { AgentRecord } from '$lib/stores/agents';
+  import { collidingAgentIds } from '$lib/stores/agents';
+  import { workdirTail, sessionTitle, shortId, realtimeInfo } from '$lib/util/agent-display';
   import StatusDot from './StatusDot.svelte';
   import ElapsedTimer from './ElapsedTimer.svelte';
   import Mascot from './Mascot.svelte';
@@ -10,13 +12,10 @@
 
   const { agent }: Props = $props();
 
-  const shortName = $derived(deriveName(agent));
-  const action = $derived(agent.label ?? '');
-
-  function deriveName(a: AgentRecord): string {
-    const colon = a.id.indexOf(':');
-    return colon > 0 ? a.id.slice(colon + 1) : a.id;
-  }
+  const project = $derived(workdirTail(agent));
+  const title = $derived(sessionTitle(agent));
+  const chip = $derived($collidingAgentIds.has(agent.id) ? `#${shortId(agent)}` : '');
+  const realtime = $derived(realtimeInfo(agent));
 </script>
 
 <article class="card state-{agent.state}" data-state={agent.state}>
@@ -32,10 +31,17 @@
   </div>
 
   <footer>
-    <div class="name">{shortName}</div>
-    {#if action}
-      <div class="action">{action}</div>
-    {/if}
+    <div class="row agent-info" class:no-title={!title && !chip}>
+      <span class="project">{project}</span>
+      <span class="right">
+        {#if title}<span class="title">{title}</span>{/if}
+        {#if chip}<span class="chip">{chip}</span>{/if}
+      </span>
+    </div>
+    <div class="row realtime-info" data-actor={realtime.actor.toLowerCase()}>
+      <span class="actor">{realtime.actor}</span>
+      <span class="activity">{realtime.activity}</span>
+    </div>
   </footer>
 </article>
 
@@ -92,25 +98,77 @@
     gap: 3px;
   }
 
-  .name {
+  .row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    line-height: 1.3;
+  }
+  .agent-info .project {
+    flex-shrink: 0;
     font-family: var(--font-mono);
-    font-size: clamp(13px, 1.4vw, 16px);
+    font-size: clamp(12px, 1.15vw, 14px);
+    font-weight: 500;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .agent-info.no-title .project {
     font-weight: 700;
     color: var(--text);
-    line-height: 1.2;
-    white-space: nowrap;
+  }
+  .agent-info .right {
+    flex-shrink: 1;
+    min-width: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .title {
+    flex-shrink: 1;
+    min-width: 0;
+    font-family: var(--font-ui);
+    font-size: clamp(13px, 1.2vw, 15px);
+    font-weight: 700;
+    color: var(--text);
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chip {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: clamp(9px, 0.85vw, 11px);
+    color: var(--text-faint);
+    letter-spacing: 0.02em;
   }
 
-  .action {
+  .realtime-info .actor {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: clamp(11px, 1.05vw, 13px);
+    font-weight: 600;
+    color: var(--text-dim);
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .realtime-info[data-actor='user'] .actor {
+    color: var(--c-thinking, #818cf8);
+  }
+  .realtime-info[data-actor='agent'] .actor {
+    color: var(--c-tool, #a3e635);
+  }
+  .realtime-info .activity {
+    flex-shrink: 1;
+    min-width: 0;
     font-family: var(--font-ui);
     font-size: clamp(11px, 1.05vw, 13px);
-    color: var(--text-dim);
-    line-height: 1.3;
-    white-space: nowrap;
+    color: var(--text);
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .card.state-waiting {
