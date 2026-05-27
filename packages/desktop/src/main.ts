@@ -3,6 +3,7 @@ import { autoUpdater } from 'electron-updater';
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
+import { enumerateAndPickTarget, type Placement } from './displays';
 
 const isDev = process.env.AGENTDECK_DEV === '1';
 const devUrl = process.env.AGENTDECK_DEV_URL || 'http://127.0.0.1:5173';
@@ -10,9 +11,6 @@ const skipHooks = process.env.AGENTDECK_SKIP_HOOKS === '1';
 
 let mainWindow: BrowserWindow | null = null;
 let backendHandle: { close: () => Promise<void> } | null = null;
-
-const WINDOW_WIDTH = 1920;
-const WINDOW_HEIGHT = 440;
 
 // Single-instance lock — prevents two installed copies (or installed + dev)
 // from racing on the backend's TCP ports.
@@ -179,10 +177,13 @@ function setupAutoUpdate(): void {
   }, 4 * 60 * 60 * 1000);
 }
 
-function createWindow(): void {
+function createWindow(placement: Placement): void {
+  const { x, y, width, height } = placement.bounds;
   mainWindow = new BrowserWindow({
-    width: WINDOW_WIDTH,
-    height: WINDOW_HEIGHT,
+    x,
+    y,
+    width,
+    height,
     minWidth: 480,
     minHeight: 200,
     frame: false,
@@ -222,11 +223,14 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   installClaudeHooksOnFirstRun();
   await startEmbeddedBackend();
-  createWindow();
+  const placement = enumerateAndPickTarget();
+  createWindow(placement);
   setupAutoUpdate();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow(enumerateAndPickTarget());
+    }
   });
 });
 
