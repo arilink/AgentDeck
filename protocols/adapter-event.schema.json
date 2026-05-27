@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentdeck.app/schemas/adapter-event.json",
+  "title": "AgentDeck Adapter Event",
+  "description": "接入层 → 后端 的事件协议。详见 docs/protocols.md",
+  "type": "object",
+  "required": ["source", "session_id", "event_type", "timestamp"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "description": "AI 工具标识",
+      "examples": ["claude-code", "codex"]
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Agent 实例唯一 ID",
+      "minLength": 1
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "session_start",
+        "user_prompt",
+        "thinking_start",
+        "tool_use_start",
+        "tool_use_end",
+        "decision_required",
+        "decision_resolved",
+        "response_complete",
+        "context_compact",
+        "session_end"
+      ]
+    },
+    "timestamp": {
+      "type": "number",
+      "description": "毫秒级 Unix 时间戳"
+    },
+    "payload": {
+      "type": "object",
+      "description": "事件相关数据,结构取决于 event_type",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

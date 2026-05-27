@@ -1,0 +1,91 @@
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Inter-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Inter-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Inter-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/JetBrainsMono-Bold.woff2') format('woff2');
+}
+
+:root {
+  --bg: #0a0a0b;
+  --card-bg: #15151a;
+  --card-border: #1f1f25;
+  --text: #e6e6ea;
+  --text-dim: #6a6a76;
+  --text-faint: #3a3a46;
+
+  --c-idle: #3a3a3a;
+  --c-thinking: #7c7cf0;
+  --c-tool: #2dd4bf;
+  --c-waiting: #f59e0b;
+  --c-done: #10b981;
+
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Menlo, monospace;
+
+  --card-target-width: 280px;
+  --card-padding: 16px;
+  --card-gap: 12px;
+  --card-radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-feature-settings: 'cv11', 'ss03', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: rgba(124, 124, 240, 0.35);
+}

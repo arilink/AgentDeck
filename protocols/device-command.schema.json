@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentdeck.app/schemas/device-command.json",
+  "title": "AgentDeck Device Command",
+  "description": "后端 → 外接设备 的命令协议(LED / 亮度 / 副屏内容 / 震动)。详见 docs/protocols.md",
+  "type": "object",
+  "required": ["device_id", "command_type"],
+  "properties": {
+    "command_id": {
+      "type": "string",
+      "description": "可选,用于设备回执对账"
+    },
+    "device_id": {
+      "type": "string",
+      "description": "目标设备 ID。\"*\" 表示广播给所有已连接设备",
+      "minLength": 1
+    },
+    "command_type": {
+      "type": "string",
+      "enum": [
+        "set_led",
+        "set_brightness",
+        "vibrate",
+        "play_pattern",
+        "set_subscreen_agent",
+        "set_subscreen_image",
+        "set_subscreen_text",
+        "clear_subscreen",
+        "ping",
+        "reboot"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "description": "命令参数,结构取决于 command_type",
+      "properties": {
+        "led_index": {
+          "type": ["integer", "string"],
+          "description": "LED 编号或 \"all\""
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "LED 颜色(16 进制)"
+        },
+        "led_mode": {
+          "type": "string",
+          "enum": ["solid", "blink", "breathe", "pulse"],
+          "description": "LED 动画模式"
+        },
+        "brightness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0–1 归一化亮度"
+        },
+        "vibrate_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "震动持续毫秒"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "play_pattern 内置预设名(如 \"decision_required\" / \"agent_done\")"
+        },
+        "agent_id": {
+          "type": "string",
+          "description": "set_subscreen_agent: 把哪个 Agent 绑定到这块副屏"
+        },
+        "screen_id": {
+          "type": "string",
+          "description": "副屏唯一 ID(同一台设备可能有多个副屏)"
+        },
+        "image_url": {
+          "type": "string",
+          "description": "set_subscreen_image: 显示图片的 URL 或 data URI"
+        },
+        "text": {
+          "type": "string",
+          "description": "set_subscreen_text: 显示的文本"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

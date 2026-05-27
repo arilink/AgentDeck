@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentdeck.app/schemas/frontend-message.json",
+  "title": "AgentDeck Frontend Message",
+  "description": "后端 ↔ 前端 的 WebSocket 协议。详见 docs/protocols.md",
+  "oneOf": [
+    { "$ref": "#/$defs/Hello" },
+    { "$ref": "#/$defs/HelloAck" },
+    { "$ref": "#/$defs/AgentList" },
+    { "$ref": "#/$defs/AgentUpdate" },
+    { "$ref": "#/$defs/DecisionShow" },
+    { "$ref": "#/$defs/DecisionHide" },
+    { "$ref": "#/$defs/DecisionResponse" },
+    { "$ref": "#/$defs/AgentPin" },
+    { "$ref": "#/$defs/AgentUnpin" }
+  ],
+  "$defs": {
+    "AgentState": {
+      "type": "string",
+      "enum": ["idle", "thinking", "tool_use", "waiting", "done"]
+    },
+    "AgentInfo": {
+      "type": "object",
+      "required": ["id", "source", "state"],
+      "properties": {
+        "id": { "type": "string" },
+        "source": { "type": "string" },
+        "state": { "$ref": "#/$defs/AgentState" },
+        "label": { "type": "string" },
+        "current_tool": { "type": ["string", "null"] },
+        "pending_decision": { "type": ["object", "null"] },
+        "metadata": { "type": "object" }
+      }
+    },
+    "DecisionOption": {
+      "type": "object",
+      "required": ["key", "label"],
+      "properties": {
+        "key": { "type": "string", "description": "键盘键或数字" },
+        "label": { "type": "string" }
+      }
+    },
+    "Hello": {
+      "type": "object",
+      "required": ["type", "protocol_version"],
+      "properties": {
+        "type": { "const": "hello" },
+        "protocol_version": { "type": "string" }
+      }
+    },
+    "HelloAck": {
+      "type": "object",
+      "required": ["type", "protocol_version", "supported"],
+      "properties": {
+        "type": { "const": "hello_ack" },
+        "protocol_version": { "type": "string" },
+        "supported": { "type": "boolean" }
+      }
+    },
+    "AgentList": {
+      "type": "object",
+      "required": ["type", "agents"],
+      "properties": {
+        "type": { "const": "agent_list" },
+        "agents": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AgentInfo" }
+        }
+      }
+    },
+    "AgentUpdate": {
+      "type": "object",
+      "required": ["type", "agent_id", "state"],
+      "properties": {
+        "type": { "const": "agent_update" },
+        "agent_id": { "type": "string" },
+        "state": { "$ref": "#/$defs/AgentState" },
+        "label": { "type": "string" },
+        "current_tool": { "type": ["string", "null"] },
+        "pending_decision": { "type": ["object", "null"] },
+        "metadata": { "type": "object" }
+      }
+    },
+    "DecisionShow": {
+      "type": "object",
+      "required": ["type", "agent_id", "decision"],
+      "properties": {
+        "type": { "const": "decision_show" },
+        "agent_id": { "type": "string" },
+        "decision": {
+          "type": "object",
+          "required": ["message", "options"],
+          "properties": {
+            "message": { "type": "string" },
+            "options": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/DecisionOption" }
+            },
+            "timeout_ms": { "type": "number" }
+          }
+        }
+      }
+    },
+    "DecisionHide": {
+      "type": "object",
+      "required": ["type", "agent_id"],
+      "properties": {
+        "type": { "const": "decision_hide" },
+        "agent_id": { "type": "string" }
+      }
+    },
+    "DecisionResponse": {
+      "type": "object",
+      "required": ["type", "agent_id", "choice"],
+      "properties": {
+        "type": { "const": "decision_response" },
+        "agent_id": { "type": "string" },
+        "choice": { "type": "string" }
+      }
+    },
+    "AgentPin": {
+      "type": "object",
+      "required": ["type", "agent_id", "screen_id"],
+      "properties": {
+        "type": { "const": "agent_pin" },
+        "agent_id": { "type": "string" },
+        "screen_id": { "type": "string" }
+      }
+    },
+    "AgentUnpin": {
+      "type": "object",
+      "required": ["type", "agent_id"],
+      "properties": {
+        "type": { "const": "agent_unpin" },
+        "agent_id": { "type": "string" }
+      }
+    }
+  }
+}

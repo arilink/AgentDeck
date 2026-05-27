@@ -1,0 +1,27 @@
+{
+  "name": "@agentdeck/frontend",
+  "version": "0.1.0",
+  "description": "AgentDeck frontend — Svelte 5 + Vite SPA for the long-strip Agent dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "svelte-check --tsconfig ./tsconfig.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^4.0.0",
+    "@tsconfig/svelte": "^5.0.0",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+out/
+target/
+release/
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.local
+.vscode/
+.idea/
+*.swp
+*.swo
+.hooks-bootstrapped

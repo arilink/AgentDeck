@@ -1,0 +1,25 @@
+{
+  "name": "@agentdeck/desktop",
+  "version": "0.1.0",
+  "description": "AgentDeck desktop shell — Electron main process + packaging",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "cross-env AGENTDECK_DEV=1 AGENTDECK_DEV_URL=http://127.0.0.1:5173 node scripts/launch-electron.cjs",
+    "preview": "node scripts/launch-electron.cjs",
+    "start": "node scripts/launch-electron.cjs",
+    "dist": "electron-builder",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "cross-env": "^7.0.3",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.0"
+  }
+}

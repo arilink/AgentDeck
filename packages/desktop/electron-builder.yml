@@ -1,0 +1,73 @@
+appId: io.agentdeck.app
+productName: AgentDeck
+copyright: Copyright © 2026 AgentDeck
+electronVersion: 32.3.3
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - package.json
+
+# Bundle frontend dist, backend dist (+ its runtime deps) and adapters as
+# extra resources outside of asar so the embedded Node process can require() them.
+extraResources:
+  - from: ../frontend/dist
+    to: frontend
+  - from: ../backend/dist
+    to: backend
+  - from: ../backend/package.json
+    to: backend/package.json
+  - from: ../backend/node_modules
+    to: backend/node_modules
+  - from: ../adapters
+    to: adapters
+
+asar: true
+
+# Skip electron-builder's `npm install --production` inside packages/desktop.
+# In our monorepo it would treat the workspace root as the install root and
+# prune devDependencies (including app-builder-bin itself), corrupting the
+# build mid-flight. We have no native deps to rebuild, so this is safe.
+npmRebuild: false
+buildDependenciesFromSource: false
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: ${productName}-Setup-${version}.${ext}
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  category: public.app-category.developer-tools
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  category: Development
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+# electron-updater feed. GitHub Releases is the simplest CDN — every release
+# tag with the built .exe + latest.yml uploaded will be picked up automatically.
+# To publish: `GH_TOKEN=... electron-builder --publish always`
+publish:
+  provider: github
+  owner: arilink
+  repo: AgentDeck
+  releaseType: release

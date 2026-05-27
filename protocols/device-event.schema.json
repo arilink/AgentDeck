@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentdeck.app/schemas/device-event.json",
+  "title": "AgentDeck Device Event",
+  "description": "外接设备 → 后端 的事件协议(物理按键 / 磁吸副屏 / 传感器)。详见 docs/protocols.md",
+  "type": "object",
+  "required": ["device_id", "event_type", "timestamp"],
+  "properties": {
+    "device_id": {
+      "type": "string",
+      "description": "设备唯一 ID(序列号或 bridge 分配的 UUID)",
+      "minLength": 1
+    },
+    "device_kind": {
+      "type": "string",
+      "description": "设备类别。bridge 上报便于后端区分用途",
+      "enum": ["button_panel", "sub_display", "sensor", "led_strip", "rotary_encoder", "composite"]
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "device_connect",
+        "device_disconnect",
+        "button_press",
+        "button_release",
+        "rotary_turn",
+        "dock_attach",
+        "dock_detach",
+        "sensor_reading",
+        "heartbeat"
+      ]
+    },
+    "timestamp": {
+      "type": "number",
+      "description": "毫秒级 Unix 时间戳"
+    },
+    "payload": {
+      "type": "object",
+      "description": "事件相关数据,结构取决于 event_type",
+      "properties": {
+        "button_id": {
+          "type": "string",
+          "description": "button_press / button_release 时的按键标识(如 \"1\"~\"6\" / \"y\" / \"n\")"
+        },
+        "modifier": {
+          "type": "string",
+          "description": "长按 / 双击等修饰",
+          "enum": ["short", "long", "double"]
+        },
+        "rotary_delta": {
+          "type": "integer",
+          "description": "rotary_turn 旋转步数,正负表示方向"
+        },
+        "dock_slot": {
+          "type": "string",
+          "description": "磁吸位标识(如 \"left\" / \"right\" / \"top\" / \"slot_1\")"
+        },
+        "sensor_kind": {
+          "type": "string",
+          "description": "sensor_reading 的传感器种类",
+          "enum": ["ambient_light", "temperature", "proximity", "battery"]
+        },
+        "sensor_value": {
+          "type": "number",
+          "description": "sensor_reading 的读数"
+        },
+        "firmware_version": {
+          "type": "string",
+          "description": "device_connect 时上报"
+        },
+        "capabilities": {
+          "type": "array",
+          "description": "device_connect 时上报支持的命令集",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,30 @@
+{
+  "name": "agentdeck",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AgentDeck — multi-AI-Agent status visualizer for a long-strip secondary display",
+  "workspaces": [
+    "packages/backend",
+    "packages/frontend",
+    "packages/desktop"
+  ],
+  "scripts": {
+    "dev:backend": "npm --workspace @agentdeck/backend run dev",
+    "dev:frontend": "npm --workspace @agentdeck/frontend run dev",
+    "dev:desktop": "npm --workspace @agentdeck/desktop run dev",
+    "build:backend": "npm --workspace @agentdeck/backend run build",
+    "build:frontend": "npm --workspace @agentdeck/frontend run build",
+    "build:desktop": "npm --workspace @agentdeck/desktop run build",
+    "build": "npm run build:backend && npm run build:frontend && npm run build:desktop",
+    "typecheck": "npm --workspace @agentdeck/backend run typecheck && npm --workspace @agentdeck/frontend run typecheck && npm --workspace @agentdeck/desktop run typecheck",
+    "dist": "npm run build && npm --workspace @agentdeck/desktop run dist",
+    "sync:public": "node scripts/sync-public.mjs",
+    "release:public": "node scripts/sync-public.mjs --push"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
