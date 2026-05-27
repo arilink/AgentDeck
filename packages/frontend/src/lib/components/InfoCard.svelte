@@ -28,6 +28,8 @@
     { key: 'idle',     label: 'idle',     cls: 'idle' },
   ] as const;
 
+  const SPARK_BARS = [25, 38, 19, 50, 69, 44, 31, 56, 75, 63, 50, 69, 88, 100, 81];
+
   function workdirTail(meta: AgentRecord['metadata']): string {
     const w = meta?.workdir;
     if (typeof w !== 'string') return '';
@@ -42,21 +44,23 @@
 </script>
 
 <article class="info-card" class:pending={tab === 'pending'}>
-  <div class="tabs">
-    <span class="tab" class:active={tab === 'pending'} class:dim={tab !== 'pending'}>
-      <span class="tab-dot"></span>PENDING
-    </span>
-    <span class="tab" class:active={tab === 'overview'} class:dim={tab !== 'overview'}>OVERVIEW</span>
-  </div>
-
   {#key tab}
     <div class="body" in:fade={{ duration: 200 }} out:fade={{ duration: 120 }}>
       {#if tab === 'pending' && current}
-        <div class="pending-head">
-          <div class="agent-name">
+        <div class="pill-tabs">
+          <span class="pill-tab active">
+            <span class="pill-dot"></span>PENDING
+          </span>
+          <span class="pill-tab dim">OVERVIEW</span>
+        </div>
+
+        <div class="agent-head">
+          <span class="agent-name">
             <span class="agent-dot"></span>{agentShortName(current)}
-          </div>
-          <div class="agent-workdir">{workdirTail(current.metadata)}</div>
+          </span>
+          {#if workdirTail(current.metadata)}
+            <div class="agent-workdir">{workdirTail(current.metadata)}</div>
+          {/if}
         </div>
 
         <p class="message">
@@ -64,23 +68,26 @@
         </p>
 
         <div class="pending-foot">
-          {#if queueExtra > 0}
-            <span class="queue">queue <strong>+{queueExtra} more</strong></span>
-          {:else}
-            <span></span>
-          {/if}
-          <span class="waiting-time">waiting <strong>{waitingFor}</strong></span>
-        </div>
-      {:else}
-        <div class="overview-head">
-          <span class="big">{$agentStats.active}</span>
-          <div class="head-meta">
-            <div class="head-meta-line">active</div>
-            <div class="head-meta-line dim">of {$agentStats.total} total</div>
+          <div class="foot-divider"></div>
+          <div class="foot-row">
+            <span class="dim">queue</span>
+            <span class="queue-val">{queueExtra > 0 ? `+${queueExtra} more` : '—'}</span>
+          </div>
+          <div class="foot-row">
+            <span class="dim">waiting</span>
+            <span class="waiting-time">{waitingFor}</span>
           </div>
         </div>
+      {:else}
+        <div class="section-label">OVERVIEW</div>
+        <div class="overview-head">
+          <span class="big">{$agentStats.active}</span>
+          <span class="big-label">active</span>
+        </div>
 
-        <div class="states-label">STATES</div>
+        <div class="divider"></div>
+
+        <div class="section-label">STATES</div>
         <ul class="states">
           {#each STATE_ROWS as row (row.key)}
             <li class="row state-{row.cls}">
@@ -91,10 +98,15 @@
           {/each}
         </ul>
 
-        <div class="tokens-label">TOKENS <span class="tokens-sub">/ 5min</span></div>
+        <div class="divider"></div>
+
+        <div class="tokens-head">
+          <span class="section-label">TOKENS <span class="tokens-sub">/ 5min</span></span>
+          <span class="tokens-peak">— peak</span>
+        </div>
         <div class="tokens-spark">
-          {#each Array(14) as _, i}
-            <span class="spark-bar" style:--h={20 + ((i * 37) % 70) + '%'}></span>
+          {#each SPARK_BARS as h}
+            <span class="spark-bar" style:--h="{h}%"></span>
           {/each}
         </div>
       {/if}
@@ -104,52 +116,32 @@
 
 <style>
   .info-card {
+    --info-text-1: #f5f5f7;
+    --info-text-2: #9999a3;
+    --info-text-3: #8e8e9a;
+    --info-border: #26262e;
+
     position: relative;
     height: 100%;
     background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    border: 1px solid var(--info-border);
     border-radius: var(--card-radius);
-    padding: 14px 16px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
   }
   .info-card.pending {
-    border-color: var(--c-waiting);
-    box-shadow: 0 0 0 1px var(--c-waiting), 0 0 28px -4px rgba(245, 158, 11, 0.45);
+    border: 2px solid var(--c-waiting);
+    padding: 11px;
+    box-shadow: 0 0 28px -4px rgba(245, 158, 11, 0.45);
     animation: pending-pulse 1.4s ease-in-out infinite;
   }
   @keyframes pending-pulse {
-    0%, 100% { box-shadow: 0 0 0 1px var(--c-waiting), 0 0 24px -6px rgba(245, 158, 11, 0.35); }
-    50%      { box-shadow: 0 0 0 1px var(--c-waiting), 0 0 32px -2px rgba(245, 158, 11, 0.65); }
+    0%, 100% { box-shadow: 0 0 24px -6px rgba(245, 158, 11, 0.35); }
+    50%      { box-shadow: 0 0 32px -2px rgba(245, 158, 11, 0.65); }
   }
-
-  .tabs {
-    display: flex;
-    gap: 14px;
-    flex-shrink: 0;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-  }
-  .tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-faint);
-    text-transform: uppercase;
-  }
-  .tab-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-  .tab.dim { color: var(--text-faint); }
-  .tab.active { color: var(--text-dim); }
-  .info-card.pending .tab:first-child.active { color: var(--c-waiting); }
 
   .body {
     flex: 1;
@@ -157,46 +149,45 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: 14px;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--info-text-3);
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .tokens-sub {
+    color: var(--info-text-3);
+    font-weight: 400;
   }
 
   .overview-head {
     display: flex;
-    align-items: flex-end;
-    gap: 10px;
+    align-items: center;
+    gap: 8px;
     flex-shrink: 0;
   }
   .big {
-    font-family: var(--font-mono);
-    font-size: clamp(36px, 6vw, 56px);
-    font-weight: 700;
+    font-family: var(--font-ui);
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 800;
     color: var(--c-tool);
     line-height: 0.9;
   }
-  .head-meta-line {
+  .big-label {
     font-family: var(--font-ui);
     font-size: 12px;
-    color: var(--text-dim);
-    line-height: 1.4;
-  }
-  .head-meta-line.dim {
-    color: var(--text-faint);
+    color: var(--info-text-2);
   }
 
-  .states-label,
-  .tokens-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    color: var(--text-faint);
-    text-transform: uppercase;
-    margin-top: 4px;
+  .divider {
+    height: 1px;
+    background: var(--info-border);
     flex-shrink: 0;
-  }
-  .tokens-sub {
-    color: var(--text-faint);
-    font-weight: 400;
   }
 
   .states {
@@ -205,103 +196,154 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 6px;
     flex-shrink: 0;
   }
   .row {
     display: grid;
-    grid-template-columns: 14px 1fr auto;
+    grid-template-columns: 8px 1fr auto;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--text-dim);
+    font-size: 11px;
   }
   .row-dot {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: var(--row-c);
     box-shadow: 0 0 6px var(--row-c);
   }
-  .row-label { color: var(--text-dim); }
-  .row-count { color: var(--text); font-weight: 700; }
+  .row-label { color: var(--info-text-2); }
+  .row-count { color: var(--info-text-1); font-weight: 600; }
 
   .state-tool     { --row-c: var(--c-tool); }
   .state-thinking { --row-c: var(--c-thinking); }
   .state-waiting  { --row-c: var(--c-waiting); }
   .state-done     { --row-c: var(--c-done); }
-  .state-idle     { --row-c: var(--text-faint); }
+  .state-idle     { --row-c: var(--c-idle); }
   .state-idle .row-dot { box-shadow: none; }
 
+  .tokens-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .tokens-peak {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--info-text-2);
+  }
   .tokens-spark {
     display: grid;
-    grid-template-columns: repeat(14, 1fr);
-    gap: 3px;
-    height: clamp(34px, 9vh, 60px);
+    grid-template-columns: repeat(15, 1fr);
+    gap: 2px;
+    flex: 1;
+    min-height: 28px;
     align-items: end;
-    margin-top: 4px;
   }
   .spark-bar {
     height: var(--h);
-    background: linear-gradient(180deg, var(--c-tool), color-mix(in srgb, var(--c-tool) 40%, transparent));
+    background: var(--c-tool);
     border-radius: 1px;
-    opacity: 0.72;
+    opacity: 0.6;
   }
 
-  .pending-head {
+  .pill-tabs {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .pill-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--info-text-3);
+  }
+  .pill-tab.active {
+    background: #2a1a00;
+    color: var(--c-waiting);
+  }
+  .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--c-waiting);
+  }
+
+  .agent-head {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
     flex-shrink: 0;
   }
   .agent-name {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-family: var(--font-mono);
-    font-size: clamp(14px, 1.5vw, 17px);
-    font-weight: 700;
-    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--info-text-1);
   }
   .agent-dot {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: var(--c-waiting);
     box-shadow: 0 0 8px var(--c-waiting);
   }
   .agent-workdir {
     font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-faint);
+    font-size: 9px;
+    color: var(--info-text-3);
   }
 
   .message {
     margin: 0;
     font-family: var(--font-ui);
-    font-size: clamp(13px, 1.25vw, 15px);
-    color: var(--text);
-    line-height: 1.45;
+    font-size: 12px;
+    color: var(--info-text-1);
+    line-height: 1.4;
     flex: 1;
     min-height: 0;
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-    line-clamp: 4;
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
   }
 
   .pending-foot {
-    border-top: 1px solid var(--card-border);
-    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .foot-divider {
+    height: 3px;
+    background: var(--info-border);
+    border-radius: 1px;
+    margin-bottom: 2px;
+  }
+  .foot-row {
     display: flex;
     justify-content: space-between;
     font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-dim);
-    flex-shrink: 0;
+    font-size: 9px;
   }
-  .queue strong { color: var(--c-waiting); }
-  .waiting-time strong { color: var(--text); }
+  .foot-row .dim { color: var(--info-text-3); }
+  .queue-val { color: var(--c-waiting); font-weight: 600; }
+  .waiting-time { color: var(--info-text-1); font-weight: 600; }
 </style>

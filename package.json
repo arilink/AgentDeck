@@ -1,6 +1,6 @@
 {
   "name": "agentdeck",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "private": true,
   "description": "AgentDeck — multi-AI-Agent status visualizer for a long-strip secondary display",
   "workspaces": [

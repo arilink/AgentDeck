@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import { makeLogger } from './logger.js';
 import { startHttpServer } from './http-server.js';
 import { startFrontendWsServer } from './ws-frontend.js';
@@ -49,10 +50,7 @@ async function main(): Promise<void> {
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
 }
 
-const isMain =
-  typeof process !== 'undefined' &&
-  process.argv[1] &&
-  import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`;
+const isMain = !!process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isMain) {
   main().catch((err) => {

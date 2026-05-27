@@ -23,7 +23,7 @@ export const agentStats = derived(agentsList, (list): AgentStats => {
   for (const a of list) byState[a.state] += 1;
 
   const running = byState.thinking + byState.tool_use;
-  const active = running + byState.waiting;
+  const active = list.length - byState.idle;
   return {
     running,
     waiting: byState.waiting,

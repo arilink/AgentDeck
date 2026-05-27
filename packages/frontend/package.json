@@ -1,6 +1,6 @@
 {
   "name": "@agentdeck/frontend",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "AgentDeck frontend — Svelte 5 + Vite SPA for the long-strip Agent dashboard",
   "private": true,
   "type": "module",

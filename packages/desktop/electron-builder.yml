@@ -11,8 +11,11 @@ files:
   - dist/**/*
   - package.json
 
-# Bundle frontend dist, backend dist (+ its runtime deps) and adapters as
-# extra resources outside of asar so the embedded Node process can require() them.
+# Bundle frontend dist, backend dist (single esbuild-bundled file) and adapters
+# as extra resources outside of asar so the embedded Node process can import() them.
+# Backend no longer ships node_modules — its dist/index.js is a self-contained
+# bundle (esbuild --bundle), which avoids npm workspaces' hoisting eating
+# transitive deps like fast-deep-equal during packaging.
 extraResources:
   - from: ../frontend/dist
     to: frontend
@@ -20,8 +23,6 @@ extraResources:
     to: backend
   - from: ../backend/package.json
     to: backend/package.json
-  - from: ../backend/node_modules
-    to: backend/node_modules
   - from: ../adapters
     to: adapters
 
