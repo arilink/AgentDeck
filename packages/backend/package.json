@@ -1,6 +1,6 @@
 {
   "name": "@agentdeck/backend",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "AgentDeck backend — HTTP event ingest + WebSocket fanout + Agent state machine",
   "private": true,
   "type": "module",
