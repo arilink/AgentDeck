@@ -21,6 +21,47 @@ function startupLog(msg: string): void {
   }
 }
 
+// Runtime log — captures every backend `log.info/warn/error` call (which
+// internally calls `console.log`) plus our updater/console messages, written
+// to a file next to the executable so portable/win-unpacked test builds can
+// be diagnosed without a console window. Set up before backend boot.
+const RUNTIME_LOG = path.join(path.dirname(process.execPath), 'backend.log');
+function attachConsoleSink(): void {
+  let stream: fs.WriteStream | null = null;
+  try {
+    stream = fs.createWriteStream(RUNTIME_LOG, { flags: 'a' });
+    stream.write(`\n--- AgentDeck v${app.getVersion()} session ${new Date().toISOString()} ---\n`);
+  } catch (e) {
+    startupLog(`attachConsoleSink: createWriteStream failed: ${String(e)}`);
+    return;
+  }
+  const orig = {
+    log: console.log.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+  };
+  // ANSI colour escapes leak in from backend's logger.ts — strip them so the
+  // file stays readable in Notepad.
+  // eslint-disable-next-line no-control-regex
+  const stripAnsi = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, '');
+  const format = (args: unknown[]): string =>
+    args
+      .map((a) => (typeof a === 'string' ? a : (() => { try { return JSON.stringify(a); } catch { return String(a); } })()))
+      .join(' ');
+  const tee = (level: string, args: unknown[]) => {
+    try {
+      stream!.write(`${new Date().toISOString().slice(11, 23)} ${level} ${stripAnsi(format(args))}\n`);
+    } catch {
+      /* swallow — best effort */
+    }
+  };
+  console.log = (...args: unknown[]) => { tee('LOG ', args); orig.log(...args); };
+  console.warn = (...args: unknown[]) => { tee('WARN', args); orig.warn(...args); };
+  console.error = (...args: unknown[]) => { tee('ERR ', args); orig.error(...args); };
+  startupLog(`attachConsoleSink: writing to ${RUNTIME_LOG}`);
+}
+attachConsoleSink();
+
 const isDev = process.env.AGENTDECK_DEV === '1';
 const devUrl = process.env.AGENTDECK_DEV_URL || 'http://127.0.0.1:5173';
 const skipHooks = process.env.AGENTDECK_SKIP_HOOKS === '1';
@@ -84,6 +125,7 @@ const HOOK_MAP: Record<string, { hook: string; matcher?: string }> = {
   Notification:     { hook: 'notification' },
   Stop:             { hook: 'stop' },
   SubagentStop:     { hook: 'subagent_stop' },
+  SessionEnd:       { hook: 'session_end' },
 };
 
 const SENTINEL = 'agentdeck-claude-code-adapter';

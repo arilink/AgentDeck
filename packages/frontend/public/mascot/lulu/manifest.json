@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "character": "lulu",
+  "generatedAt": "2026-05-29T10:42:54Z",
+  "assets": [
+    {
+      "state": "done",
+      "webm": "webm/done.webm",
+      "mp4": "mp4/done.mp4",
+      "poster": "poster/done.jpg"
+    },
+    {
+      "state": "idle",
+      "webm": "webm/idle.webm",
+      "mp4": "mp4/idle.mp4",
+      "poster": "poster/idle.jpg"
+    },
+    {
+      "state": "reading",
+      "webm": "webm/reading.webm",
+      "mp4": "mp4/reading.mp4",
+      "poster": "poster/reading.jpg"
+    },
+    {
+      "state": "thinking",
+      "webm": "webm/thinking.webm",
+      "mp4": "mp4/thinking.mp4",
+      "poster": "poster/thinking.jpg"
+    },
+    {
+      "state": "waiting",
+      "webm": "webm/waiting.webm",
+      "mp4": "mp4/waiting.mp4",
+      "poster": "poster/waiting.jpg"
+    },
+    {
+      "state": "writing",
+      "webm": "webm/writing.webm",
+      "mp4": "mp4/writing.mp4",
+      "poster": "poster/writing.jpg"
+    }
+  ]
+}

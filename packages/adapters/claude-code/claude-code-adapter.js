@@ -123,6 +123,18 @@ async function main() {
   let hookData = {};
   try { hookData = raw ? JSON.parse(raw) : {}; } catch { hookData = {}; }
 
+  // Notification fires for several reasons (official notification_type values:
+  // permission_prompt / idle_prompt / auth_success / elicitation_dialog). Only
+  // permission_prompt and elicitation_dialog mean "blocked, waiting on the user
+  // to decide". idle_prompt / auth_success are informational — forwarding them
+  // as decision_required would wrongly flip the card into amber `waiting`.
+  if (hookType === 'notification') {
+    const nt = hookData.notification_type || '';
+    if (nt !== 'permission_prompt' && nt !== 'elicitation_dialog') {
+      process.exit(0);
+    }
+  }
+
   const sessionId = hookData.session_id || hookData.sessionId || hookData.transcript_path || 'unknown';
 
   const event = {

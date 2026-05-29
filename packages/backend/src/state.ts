@@ -66,6 +66,11 @@ export class AgentRegistry extends EventEmitter {
     existing.last_active = now;
     this.armIdleTimer(existing);
 
+    if (existing.state !== prevState) {
+      const toolHint = existing.current_tool ? ` (${existing.current_tool})` : '';
+      log.info(`agent ${id} ${prevState} → ${existing.state} [${event.event_type}]${toolHint}`);
+    }
+
     if (event.event_type === 'session_end') {
       this.removeAgent(id);
       return;
@@ -112,12 +117,18 @@ export class AgentRegistry extends EventEmitter {
 
   private armIdleTimer(agent: AgentRecord): void {
     if (agent.idleTimer) clearTimeout(agent.idleTimer);
-    if (agent.state === 'waiting' || agent.state === 'done') return;
+    // `waiting` never times out — it's blocked on the user, not on activity.
+    // `done` DOES time out: 60s after a response completes with no follow-up,
+    // the agent has genuinely gone idle. Letting the backend own this keeps
+    // state as the single source of truth (the frontend mascot used to fake
+    // this drift locally, which desynced the animation from the status text).
+    if (agent.state === 'waiting') return;
     agent.idleTimer = setTimeout(() => {
-      if (agent.state === 'tool_use' || agent.state === 'thinking') {
+      if (agent.state === 'tool_use' || agent.state === 'thinking' || agent.state === 'done') {
+        const prev = agent.state;
         agent.state = 'idle';
         agent.current_tool = null;
-        log.debug(`agent ${agent.id} idle (timeout)`);
+        log.info(`agent ${agent.id} → idle (timeout from ${prev}, last_active=${new Date(agent.last_active).toISOString().slice(11, 23)})`);
         this.emit('event', { kind: 'updated', agent: stripInternal(agent) } satisfies AgentEvent);
       }
     }, IDLE_TIMEOUT_MS);

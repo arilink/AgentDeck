@@ -36,6 +36,9 @@
     ],
     "SubagentStop": [
       { "hooks": [{ "type": "command", "command": "node <ABS_PATH>/claude-code-adapter.js subagent_stop",  "timeout": 0.5 }] }
+    ],
+    "SessionEnd": [
+      { "hooks": [{ "type": "command", "command": "node <ABS_PATH>/claude-code-adapter.js session_end",     "timeout": 0.5 }] }
     ]
   }
 }
@@ -65,13 +68,10 @@
 | `UserPromptSubmit` | `user_prompt` | 用户发送一条消息 |
 | `PreToolUse` | `tool_use_start` | 工具调用前 |
 | `PostToolUse` | `tool_use_end` | 工具调用后 |
-| `Notification` | `decision_required` | Claude 请求用户决策 / 权限确认 |
-| `Stop` | `session_end` | 一次响应结束 (注意:不是会话结束) |
-| `SubagentStop` | `session_end` | Task 子 agent 结束 |
-
-> **TODO**: Stop 实际语义是"一次回复完成",不是"会话结束"。当前映射会导致
-> 状态机过早删除 agent。后续应增加 SessionEnd hook 用作真正的会话结束信号,
-> Stop 改映射成 `response_complete` (state → done 但保留 agent)。
+| `Notification` | `decision_required` | 仅 `permission_prompt` / `elicitation_dialog`(等待用户决策);`idle_prompt` / `auth_success` 等被 adapter 静默丢弃 |
+| `Stop` | `response_complete` | 一次响应结束 → state `done`,**保留 agent**(不删) |
+| `SubagentStop` | `response_complete` | Task 子 agent 结束 → 同上 |
+| `SessionEnd` | `session_end` | 会话真正结束(`reason`: clear / logout / …)→ 后端移除 agent |
 
 ## 设计原则
 

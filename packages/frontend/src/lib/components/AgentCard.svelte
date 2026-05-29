@@ -27,7 +27,7 @@
   </header>
 
   <div class="mascot-area">
-    <Mascot state={agent.state} variant="icon" />
+    <Mascot {agent} variant="lulu" />
   </div>
 
   <footer>
@@ -38,10 +38,12 @@
         {#if chip}<span class="chip">{chip}</span>{/if}
       </span>
     </div>
-    <div class="row realtime-info" data-actor={realtime.actor.toLowerCase()}>
-      <span class="actor">{realtime.actor}</span>
-      <span class="activity">{realtime.activity}</span>
-    </div>
+    {#if agent.state !== 'idle'}
+      <div class="row realtime-info" data-actor={realtime.actor.toLowerCase()}>
+        <span class="actor">{realtime.actor}</span>
+        <span class="activity">{realtime.activity}</span>
+      </div>
+    {/if}
   </footer>
 </article>
 
@@ -85,10 +87,26 @@
   .mascot-area {
     flex: 1;
     min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative;
     margin: 6px 0 4px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+    box-shadow:
+      inset 0 0 32px -8px rgba(0, 0, 0, 0.7),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+  .mascot-area::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 45%,
+      rgba(10, 10, 11, 0.4) 78%,
+      rgba(10, 10, 11, 0.85) 100%
+    );
   }
 
   footer {
